@@ -5,6 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verhuurders Netwerk Oost-Algarve</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+// ... (bestaande Firestore initialisatie) ...
+const auth = firebase.auth(); // Nieuw: Initialiseer de Authenticatie service
+const db = firebase.firestore(); 
+
+// === Hulpfuncties voor UI-wisseling ===
+function toonLogin() {
+    document.getElementById('registratie-formulier').style.display = 'none';
+    document.getElementById('login-formulier').style.display = 'block';
+}
+function toonRegistratie() {
+    document.getElementById('registratie-formulier').style.display = 'block';
+    document.getElementById('login-formulier').style.display = 'none';
+}
+    
+ function registreerGebruiker(event) {
+    event.preventDefault();
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-wachtwoord').value;
+    const naam = document.getElementById('reg-naam').value;
+
+    auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            // Stap 1: Registratie succesvol in Firebase Auth
+            const user = userCredential.user;
+            
+            // Stap 2: Opslaan van het Verhuurdersprofiel in Firestore
+            return db.collection("gebruikers").doc(user.uid).set({
+                Naam: naam,
+                Email: email,
+                Rol: "Verhuurder",
+                Status_Verificatie: "Niet Verstuurd",
+                Locatie_Focus: "Nog In Te Vullen",
+                Telefoon_Publiek: false
+            });
+        })
+        .then(() => {
+            alert("Registratie succesvol! Je bent nu ingelogd.");
+            startApp(); // Ga naar de hoofd-app (zie stap 3)
+        })
+        .catch((error) => {
+            alert("Fout bij registratie: " + error.message);
+        });
+}   
 </head>
 <body>
 <section id="Auth" class="module actief">
