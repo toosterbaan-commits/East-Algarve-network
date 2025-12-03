@@ -181,5 +181,26 @@
             // De app start pas met startApp()
         }
     </script>
+    <body>
+    <script type="module">
+      import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js';
+      import { getAuth } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js';
+
+      // 2. Je configuratieobject
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        // ... andere config
+      };
+
+      // 3. Initialiseer de Firebase-app
+      const app = initializeApp(firebaseConfig);
+
+      // 4. Initialiseer de Auth-module (dit is wat je zocht)
+      const auth = getAuth(app);
+
+      // Nu kun je de 'auth' variabele gebruiken voor inlogfuncties, enz.
+    </script>
+</body>
 </body>
 </html>
