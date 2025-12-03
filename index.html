@@ -6,7 +6,30 @@
     <title>Verhuurders Netwerk Oost-Algarve</title>
 </head>
 <body>
+<section id="Auth" class="module actief">
+    <div class="auth-container">
+        <h1>Welkom Terug bij het Netwerk</h1>
 
+        <form id="registratie-formulier">
+            <h2>Nieuw Account</h2>
+            <input type="text" id="reg-naam" placeholder="Bedrijfsnaam / Naam" required>
+            <input type="email" id="reg-email" placeholder="E-mailadres" required>
+            <input type="password" id="reg-wachtwoord" placeholder="Wachtwoord" required>
+            <button type="submit" onclick="registreerGebruiker(event)" class="knop-primair">Registreren</button>
+            <p>Al een account? <a href="#" onclick="toonLogin()">Log hier in</a></p>
+        </form>
+
+        <hr>
+
+        <form id="login-formulier" style="display: none;">
+            <h2>Inloggen</h2>
+            <input type="email" id="login-email" placeholder="E-mailadres" required>
+            <input type="password" id="login-wachtwoord" placeholder="Wachtwoord" required>
+            <button type="submit" onclick="logInGebruiker(event)" class="knop-primair">Inloggen</button>
+            <p>Nog geen account? <a href="#" onclick="toonRegistratie()">Registreer hier</a></p>
+        </form>
+    </div>
+</section>
     <section id="Welkomst" class="module actief">
         <div class="welkomst-container">
             <img src="https://cdn.pixabay.com/photo/2013/11/10/19/52/rock-208433_1280.jpg" alt="Landschap Oost-Algarve" class="welkomst-foto">
