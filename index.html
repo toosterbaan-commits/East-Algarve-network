@@ -17,6 +17,78 @@
 
 </head>
 <body>
+
+<script>
+    // ========= 1. JOUW UNIEKE FIREBASE CONFIGURATIE (START) =========
+    const firebaseConfig = {
+      apiKey: "AIzaSyD8X8zLlVEbCJsk_T7IgwGvjpMk39GjxVU",
+      authDomain: "oost-algarve-network.firebaseapp.com",
+      projectId: "oost-algarve-network",
+      storageBucket: "oost-algarve-network.firebasestorage.app",
+      messagingSenderId: "905979737722",
+      appId: "1:905979737722:web:a7df5a062f7f058c3b2dc3"
+    };
+    // ================================================================
+
+    // 2. INITIALISATIE VAN FIREBASE SERVICES
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();     // De Authenticatie service
+    const db = firebase.firestore(); // De Firestore Database service
+    
+    // Simulatiedata (kan nu worden uitgecommentarieerd of verwijderd)
+    // localStorage.setItem('gebruikersData', JSON.stringify([...]));
+    
+    // === 3. AUTHENTICATIE EN NAVIGATIE LOGICA ===
+
+    function verbergAlles() {
+        document.querySelectorAll('.module').forEach(sec => {
+            sec.style.display = 'none';
+        });
+        document.getElementById('app-container').style.display = 'none';
+        document.getElementById('nav-bar').style.display = 'none';
+        document.getElementById('Welkomst').style.display = 'none'; // Als je deze nog hebt
+    }
+
+    // Centrale functie om de hoofd-app te starten na inloggen
+    function startApp(uid) {
+        verbergAlles();
+        document.getElementById('app-container').style.display = 'block';
+        document.getElementById('nav-bar').style.display = 'flex';
+        wisselModule('Verwijzingen'); 
+        // We kunnen nu de UID gebruiken om profielgegevens op te halen!
+    }
+    
+    // Functie om de schermen van het Auth-formulier te wisselen
+    function toonLogin() {
+        document.getElementById('registratie-formulier').style.display = 'none';
+        document.getElementById('login-formulier').style.display = 'block';
+    }
+    function toonRegistratie() {
+        document.getElementById('registratie-formulier').style.display = 'block';
+        document.getElementById('login-formulier').style.display = 'none';
+    }
+
+    // CHECK BIJ OPSTARTEN: Bepaalt welke pagina wordt getoond
+    auth.onAuthStateChanged(function(user) {
+        verbergAlles();
+
+        if (user) {
+            // GEVAL 1: Gebruiker is ingelogd
+            startApp(user.uid); 
+        } else {
+            // GEVAL 2: Gebruiker is NIET ingelogd
+            document.getElementById('Auth').style.display = 'block'; 
+            toonRegistratie(); // Toon registratieformulier als standaard
+        }
+    });
+
+    // ... (De bestaande logica voor registreren en inloggen, die je al had, 
+    //      komt hieronder te staan en gebruikt de 'auth' en 'db' variabelen)
+    
+    // ... (De wisselModule() functie komt hieronder) ...
+    // ... (De prikbordLaden() en netwerkLaden() functies komen hieronder) ...
+</script>
+    
 <section id="Auth" class="module actief">
     <div class="auth-container">
         <h1>Welkom Terug bij het Netwerk</h1>
