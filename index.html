@@ -4,173 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verhuurders Netwerk Oost-Algarve</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verhuurders Netwerk Oost-Algarve</title>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script> 
-
-</head>
-<body>
-
-<script>
-    // ========= 1. JOUW UNIEKE FIREBASE CONFIGURATIE (START) =========
-    const firebaseConfig = {
-      apiKey: "AIzaSyD8X8zLlVEbCJsk_T7IgwGvjpMk39GjxVU",
-      authDomain: "oost-algarve-network.firebaseapp.com",
-      projectId: "oost-algarve-network",
-      storageBucket: "oost-algarve-network.firebasestorage.app",
-      messagingSenderId: "905979737722",
-      appId: "1:905979737722:web:a7df5a062f7f058c3b2dc3"
-    };
-    // ================================================================
-
-    // 2. INITIALISATIE VAN FIREBASE SERVICES
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();     // De Authenticatie service
-    const db = firebase.firestore(); // De Firestore Database service
-    
-    // Simulatiedata (kan nu worden uitgecommentarieerd of verwijderd)
-    // localStorage.setItem('gebruikersData', JSON.stringify([...]));
-    
-    // === 3. AUTHENTICATIE EN NAVIGATIE LOGICA ===
-
-    function verbergAlles() {
-        document.querySelectorAll('.module').forEach(sec => {
-            sec.style.display = 'none';
-        });
-        document.getElementById('app-container').style.display = 'none';
-        document.getElementById('nav-bar').style.display = 'none';
-        document.getElementById('Welkomst').style.display = 'none'; // Als je deze nog hebt
-    }
-
-    // Centrale functie om de hoofd-app te starten na inloggen
-    function startApp(uid) {
-        verbergAlles();
-        document.getElementById('app-container').style.display = 'block';
-        document.getElementById('nav-bar').style.display = 'flex';
-        wisselModule('Verwijzingen'); 
-        // We kunnen nu de UID gebruiken om profielgegevens op te halen!
-    }
-    
-    // Functie om de schermen van het Auth-formulier te wisselen
-    function toonLogin() {
-        document.getElementById('registratie-formulier').style.display = 'none';
-        document.getElementById('login-formulier').style.display = 'block';
-    }
-    function toonRegistratie() {
-        document.getElementById('registratie-formulier').style.display = 'block';
-        document.getElementById('login-formulier').style.display = 'none';
-    }
-
-    // CHECK BIJ OPSTARTEN: Bepaalt welke pagina wordt getoond
-    auth.onAuthStateChanged(function(user) {
-        verbergAlles();
-
-        if (user) {
-            // GEVAL 1: Gebruiker is ingelogd
-            startApp(user.uid); 
-        } else {
-            // GEVAL 2: Gebruiker is NIET ingelogd
-            document.getElementById('Auth').style.display = 'block'; 
-            toonRegistratie(); // Toon registratieformulier als standaard
-        }
-    });
-
-    // ... (De bestaande logica voor registreren en inloggen, die je al had, 
-    //      komt hieronder te staan en gebruikt de 'auth' en 'db' variabelen)
-    
-    // ... (De wisselModule() functie komt hieronder) ...
-    // ... (De prikbordLaden() en netwerkLaden() functies komen hieronder) ...
-</script>
-    
-<section id="Auth" class="module actief">
-    <div class="auth-container">
-        <h1>Welkom Terug bij het Netwerk</h1>
-
-        <form id="registratie-formulier">
-            <h2>Nieuw Account</h2>
-            <input type="text" id="reg-naam" placeholder="Bedrijfsnaam / Naam" required>
-            <input type="email" id="reg-email" placeholder="E-mailadres" required>
-            <input type="password" id="reg-wachtwoord" placeholder="Wachtwoord" required>
-            <button type="submit" onclick="registreerGebruiker(event)" class="knop-primair">Registreren</button>
-            <p>Al een account? <a href="#" onclick="toonLogin()">Log hier in</a></p>
-        </form>
-
-        <hr>
-
-        <form id="login-formulier" style="display: none;">
-            <h2>Inloggen</h2>
-            <input type="email" id="login-email" placeholder="E-mailadres" required>
-            <input type="password" id="login-wachtwoord" placeholder="Wachtwoord" required>
-            <button type="submit" onclick="logInGebruiker(event)" class="knop-primair">Inloggen</button>
-            <p>Nog geen account? <a href="#" onclick="toonRegistratie()">Registreer hier</a></p>
-        </form>
-    </div>
-</section>
-    <section id="Welkomst" class="module actief">
-        <div class="welkomst-container">
-            <img src="https://cdn.pixabay.com/photo/2013/11/10/19/52/rock-208433_1280.jpg" alt="Landschap Oost-Algarve" class="welkomst-foto">
-            
-            <h1>Welkom bij het Oost-Algarve Verhuurders Netwerk</h1>
-            <p>Jouw platform voor efficiënte communicatie en samenwerking tussen verhuurders in de prachtige Oost-Algarve.</p>
-            
-            <h2>Wat bieden we?</h2>
-            <ul>
-                <li><strong>Huurdersverwijzingen:</strong> Help elkaar bij overboeking.</li>
-                <li><strong>Verhuurders Netwerk:</strong> Vind en verbind met collega's.</li>
-                <li><strong>Kennisbank:</strong> Deel belangrijke documenten en tips.</li>
-                <li><strong>Directe Berichten:</strong> Communiceer snel en veilig.</li>
-            </ul>
-            
-            <button class="knop-primair" onclick="startApp()">Start de App</button>
-        </div>
-    </section>
-
-    <main id="app-container" style="display: none;">
-        <section id="Verwijzingen" class="module"> <header>
-                <h1>🏘️ Verwijzingen Prikbord</h1>
-                <button onclick="toonFormulier()">+ Aanbieden</button>
-            </header>
-            <div id="verwijzingen-lijst">
-                </div>
-            
-            <div id="verwijzing-formulier" style="display: none;">
-                </div>
-        </section>
-
-        <section id="Netwerk" class="module" style="display: none;">
-            <h1>👥 Verhuurders Netwerk</h1>
-            <div id="netwerk-lijst">
-                </div>
-        </section>
-
-        <section id="Kennisbank" class="module" style="display: none;">
-            <h1>📚 Kennisbank</h1>
-            <div id="kennisbank-lijst">
-                </div>
-        </section>
-
-        <section id="Berichten" class="module" style="display: none;">
-            <h1>✉️ Berichten Inbox</h1>
-            </section>
-    </main>
-
-    <nav id="nav-bar" style="display: none;">
-        <button onclick="wisselModule('Verwijzingen')">Verwijzingen</button>
-        <button onclick="wisselModule('Netwerk')">Netwerk</button>
-        <button onclick="wisselModule('Kennisbank')">Kennisbank</button>
-        <button onclick="wisselModule('Berichten')">Berichten</button>
-    </nav>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     
     <style>
+        /* ... (Alle CSS van de <style> sectie hier plaatsen) ... */
+        
         /* Voeg deze nieuwe CSS toe */
-        #Welkomst {
+        #Auth {
             text-align: center;
             padding: 20px;
             max-width: 600px;
@@ -180,108 +23,136 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-top: 20px;
         }
-        .welkomst-foto {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .welkomst-container h1 {
-            color: #333;
-        }
-        .welkomst-container p, .welkomst-container ul {
-            color: #555;
-            text-align: left;
-            margin-bottom: 20px;
-        }
-        .welkomst-container ul {
-            list-style-type: disc;
-            padding-left: 25px;
-        }
-        .welkomst-container li {
-            margin-bottom: 10px;
-        }
-        .knop-primair { /* Bestaande stijl voor deze knop werkt hier ook */
-            margin-top: 20px;
-        }
-
-        /* Bestaande CSS */
-        body { font-family: sans-serif; margin: 0; background-color: #f8f8f8; }
-        #app-container { padding: 10px; padding-bottom: 60px; }
-        h1 { margin-top: 0; }
-        
-        #nav-bar {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            display: flex; justify-content: space-around;
-            background-color: #ffffff; border-top: 1px solid #ddd;
-            padding: 8px 0;
-        }
-        #nav-bar button {
-            border: none; background: none; padding: 10px; cursor: pointer;
-        }
-        
-        .verwijzing-kaart, .netwerk-kaart, .kennisbank-item {
-            background-color: white; border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 15px; padding: 15px;
-        }
         /* ... (De rest van je bestaande CSS) ... */
     </style>
+</head>
+<body>
 
+    <section id="Auth" class="module actief">
+        <div class="auth-container">
+            <h1>Welkom Terug bij het Netwerk</h1>
+
+            <form id="registratie-formulier" onsubmit="registreerGebruiker(event)"> 
+                <h2>Nieuw Account</h2>
+                <input type="text" id="reg-naam" placeholder="Bedrijfsnaam / Naam" required>
+                <input type="email" id="reg-email" placeholder="E-mailadres" required>
+                <input type="password" id="reg-wachtwoord" placeholder="Wachtwoord" required>
+                <button type="submit" class="knop-primair">Registreren</button>
+                <p>Al een account? <a href="#" onclick="toonLogin()">Log hier in</a></p>
+            </form>
+
+            <hr>
+
+            <form id="login-formulier" style="display: none;" onsubmit="logInGebruiker(event)">
+                <h2>Inloggen</h2>
+                <input type="email" id="login-email" placeholder="E-mailadres" required>
+                <input type="password" id="login-wachtwoord" placeholder="Wachtwoord" required>
+                <button type="submit" class="knop-primair">Inloggen</button>
+                <p>Nog geen account? <a href="#" onclick="toonRegistratie()">Registreer hier</a></p>
+            </form>
+        </div>
+    </section>
+
+    <section id="Welkomst" class="module" style="display: none;">
+        </section>
+
+    <main id="app-container" style="display: none;">
+        </main>
+
+    <nav id="nav-bar" style="display: none;">
+        </nav>
+    
     <script>
-        // === 1. SIMULATIE VAN DATA (localStorage) ===
-        // ... (De bestaande localStorage items blijven hetzelfde) ...
+        // ========= FIREBASE INITIALISATIE (Met jouw unieke config) =========
+        const firebaseConfig = {
+          apiKey: "AIzaSyD8X8zLlVEbCJsk_T7IgwGvjpMk39GjxVU",
+          authDomain: "oost-algarve-network.firebaseapp.com",
+          projectId: "oost-algarve-network",
+          storageBucket: "oost-algarve-network.firebasestorage.app",
+          messagingSenderId: "905979737722",
+          appId: "1:905979737722:web:a7df5a062f7f058c3b2dc3"
+        };
 
-        // === 2. NAVIGATIE LOGICA ===
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();     
+        const db = firebase.firestore(); 
+
+        // === ALGEMEEN NAVIGATIE FRAMEWORK ===
+        function verbergAlles() {
+            // ... (Bestand: Verbergt Auth, Welkomst, App Container, Navigatie) ...
+        }
+        function startApp(uid) {
+            // ... (Bestand: Toont App Container en Navigatie) ...
+        }
+        function toonLogin() {
+            // ... (Bestand: Wisselt Auth schermen) ...
+        }
+        function toonRegistratie() {
+            // ... (Bestand: Wisselt Auth schermen) ...
+        }
         function wisselModule(moduleId) {
-            document.querySelectorAll('.module').forEach(sec => {
-                sec.style.display = 'none';
-            });
-            document.getElementById(moduleId).style.display = 'block';
-            
-            // Laad de data voor de actieve module
-            if (moduleId === 'Verwijzingen') prikbordLaden();
-            if (moduleId === 'Netwerk') netwerkLaden();
-            if (moduleId === 'Kennisbank') kennisbankLaden();
-            // Berichten later
+            // ... (Bestand: Wisselt tussen app modules) ...
         }
 
-        // NIEUWE FUNCTIE: Start de App vanaf de Welkomstpagina
-        function startApp() {
-            document.getElementById('Welkomst').style.display = 'none'; // Verberg welkomstpagina
-            document.getElementById('app-container').style.display = 'block'; // Toon hoofd-app
-            document.getElementById('nav-bar').style.display = 'flex'; // Toon navigatiebalk
-            wisselModule('Verwijzingen'); // Start met de Verwijzingen-module
+        // === AUTHENTICATIE LOGICA (Jouw functies) ===
+        function registreerGebruiker(event) {
+            event.preventDefault(); // Dit moet de pagina reload stoppen!
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-wachtwoord').value;
+            const naam = document.getElementById('reg-naam').value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    // Profiel opslaan in Firestore
+                    return db.collection("gebruikers").doc(user.uid).set({
+                        Naam: naam,
+                        Email: email,
+                        Rol: "Verhuurder",
+                        Status_Verificatie: "Niet Verstuurd",
+                        Locatie_Focus: "Nog In Te Vullen",
+                        Telefoon_Publiek: false
+                    });
+                })
+                .then(() => {
+                    alert("Registratie succesvol! Je bent nu ingelogd.");
+                    startApp(); 
+                })
+                .catch((error) => {
+                    alert("Fout bij registratie: " + error.message);
+                });
         }
+
+        function logInGebruiker(event) {
+            event.preventDefault(); // Dit moet de pagina reload stoppen!
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-wachtwoord').value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    alert("Succesvol ingelogd!");
+                    // startApp() wordt automatisch aangeroepen door onAuthStateChanged
+                })
+                .catch((error) => {
+                    alert("Fout bij inloggen: " + error.message);
+                });
+        }
+
+        // === STARTUP CHECK ===
+        auth.onAuthStateChanged(function(user) {
+            verbergAlles();
+
+            if (user) {
+                // Gebruiker is ingelogd
+                startApp(user.uid); 
+            } else {
+                // Gebruiker is NIET ingelogd
+                document.getElementById('Auth').style.display = 'block'; 
+                toonRegistratie(); // Toon registratieformulier als standaard
+            }
+        });
         
-        // === 3. MODULE LAADFUNCTIES ===
-        // ... (De bestaande prikbordLaden() en netwerkLaden() blijven hetzelfde) ...
-        
-        // Pas window.onload aan om de welkomstpagina te tonen
-        window.onload = function() {
-            // Niets te doen hier, de welkomstpagina is standaard zichtbaar
-            // De app start pas met startApp()
-        }
-    </script>
-    <body>
-    <script type="module">
-      import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js';
-      import { getAuth } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js';
-
-      // 2. Je configuratieobject
-      const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_AUTH_DOMAIN",
-        // ... andere config
-      };
-
-      // 3. Initialiseer de Firebase-app
-      const app = initializeApp(firebaseConfig);
-
-      // 4. Initialiseer de Auth-module (dit is wat je zocht)
-      const auth = getAuth(app);
-
-      // Nu kun je de 'auth' variabele gebruiken voor inlogfuncties, enz.
+        // ... (De rest van je prikbordLaden() en netwerkLaden() functies hier) ...
     </script>
 </body>
 </html>
