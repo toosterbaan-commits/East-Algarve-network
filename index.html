@@ -345,6 +345,19 @@
                 toonMelding('Auth', "Fout bij inloggen: Controleer e-mail en wachtwoord.", 'red');
             });
     }
+
+        // Nieuwe functie om de Welkomstpagina te verlaten en de Hoofdapp te starten
+function startHoofdApp() {
+    // Verberg de Welkomstpagina
+    document.getElementById('Welkomst').style.display = 'none';
+    
+    // Toon de hoofdapp en navigatiebalk
+    document.getElementById('app-container').style.display = 'block';
+    document.getElementById('nav-bar').style.display = 'flex';
+    
+    // Start direct op het prikbord
+    wisselModule('Verwijzingen'); 
+}
     
     function logUit() {
         auth.signOut().then(() => {
@@ -379,13 +392,16 @@
     }
 
     function startApp(uid, naam) {
-        currentUserId = uid; 
-        currentUserNaam = naam; // Stel de naam in
-        verbergAlles();
-        document.getElementById('app-container').style.display = 'block';
-        document.getElementById('nav-bar').style.display = 'flex';
-        wisselModule('Verwijzingen'); // Start nu op het prikbord
-    }
+    currentUserId = uid; 
+    currentUserNaam = naam; 
+    verbergAlles();
+    
+    // Toon de Welkomstpagina na een succesvolle login/registratie
+    document.getElementById('Welkomst').style.display = 'block'; 
+    
+    // Belangrijk: De app-container en navigatie blijven verborgen
+    // totdat de gebruiker op de knop "Start de App" klikt.
+}
     
     function toonLogin() {
         document.getElementById('registratie-formulier').style.display = 'none';
