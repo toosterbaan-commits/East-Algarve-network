@@ -366,15 +366,16 @@ function startHoofdApp() {
 }
     
     function logUit() {
-        auth.signOut().then(() => {
-            console.log("Uitgelogd!");
-            verbergAlles();
-            document.getElementById('Auth').style.display = 'block';
-            window.location.reload(); 
-        }).catch((error) => {
-            console.error("Fout bij uitloggen:", error);
-        });
-    }
+    auth.signOut().then(() => {
+        console.log("Uitgelogd!");
+        // Forceer een volledige pagina herlading om de UI te resetten
+        // en de auth.onAuthStateChanged listener opnieuw te activeren
+        window.location.reload(); 
+    }).catch((error) => {
+        console.error("Fout bij uitloggen:", error);
+        alert("Fout bij uitloggen: " + error.message);
+    });
+}
 
 
     // === 3. NAVIGATIE EN UI LOGICA ===
