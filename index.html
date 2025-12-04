@@ -1,4 +1,288 @@
-<script>
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verhuurders Netwerk Oost-Algarve</title>
+
+    <!-- Firebase V8 CDN Links - Essentieel voor authenticatie en database -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    
+    <!-- Tailwind CSS voor snelle styling en responsiviteit -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* Aangepaste Stijlen voor de App */
+        :root {
+            --primary-color: #007bff; /* Een helder blauw, typisch Algarve zee */
+            --secondary-color: #28a745; /* Groen voor succes/actie */
+            --background-color: #f8f8f8;
+            --card-color: #ffffff;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            background-color: var(--background-color); 
+        }
+
+        /* Hoofd Layout */
+        #app-container { 
+            padding: 10px; 
+            padding-bottom: 70px; /* Ruimte voor de navigatiebalk */
+            min-height: 100vh;
+        }
+        
+        /* Knoppen */
+        .knop-primair {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .knop-primair:hover {
+            background-color: #0056b3;
+        }
+
+        /* Modules */
+        .module {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        /* Navigatie */
+        #nav-bar {
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0;
+            display: flex; 
+            justify-content: space-around;
+            background-color: var(--card-color); 
+            border-top: 1px solid #ddd;
+            padding: 8px 0;
+            z-index: 100;
+        }
+        #nav-bar button {
+            border: none; 
+            background: none; 
+            padding: 10px; 
+            cursor: pointer;
+            color: #555;
+            transition: color 0.2s;
+        }
+        #nav-bar button:hover {
+            color: var(--primary-color);
+        }
+        
+        /* Kaarten en Lijsten */
+        .verwijzing-kaart, .netwerk-kaart, .kennisbank-item {
+            background-color: var(--card-color); 
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 15px; 
+            padding: 15px;
+        }
+
+        /* Welkomstmodule Styling */
+        #Welkomst {
+            text-align: center;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: var(--card-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .welkomst-foto {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .welkomst-container p, .welkomst-container ul {
+            color: #555;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .welkomst-container ul {
+            list-style-type: disc;
+            padding-left: 25px;
+        }
+
+        /* Auth Module Styling */
+        #Auth {
+            text-align: center;
+            padding: 20px;
+            max-width: 400px;
+            margin: 50px auto;
+            background-color: var(--card-color);
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        #Auth input, #Profiel input, #Profiel textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box; 
+        }
+        #Auth h1, #Auth h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        #Auth a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        #Auth hr {
+            margin: 20px 0;
+            border: 0;
+            border-top: 1px solid #eee;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <!-- 1. AUTHENTICATIE MODULE (Standaard zichtbaar, totdat gebruiker inlogt) -->
+    <section id="Auth" class="module">
+        <div class="auth-container">
+            <h1>Welkom bij het Netwerk</h1>
+
+            <!-- REGISTRATIEFORMULIER -->
+            <form id="registratie-formulier" onsubmit="registreerGebruiker(event)">
+                <h2>Nieuw Account</h2>
+                <input type="text" id="reg-naam" placeholder="Bedrijfsnaam / Naam" required>
+                <input type="email" id="reg-email" placeholder="E-mailadres" required>
+                <input type="password" id="reg-wachtwoord" placeholder="Wachtwoord" required>
+                <button type="submit" class="knop-primair">Registreren</button>
+                <p class="mt-4">Al een account? <a href="#" onclick="toonLogin()">Log hier in</a></p>
+            </form>
+
+            <hr>
+
+            <!-- INLOGFORMULIER -->
+            <form id="login-formulier" style="display: none;" onsubmit="logInGebruiker(event)">
+                <h2>Inloggen</h2>
+                <input type="email" id="login-email" placeholder="E-mailadres" required>
+                <input type="password" id="login-wachtwoord" placeholder="Wachtwoord" required>
+                <button type="submit" class="knop-primair">Inloggen</button>
+                <p class="mt-4">Nog geen account? <a href="#" onclick="toonRegistratie()">Registreer hier</a></p>
+            </form>
+        </div>
+    </section>
+
+    <!-- 2. WELKOMST MODULE (Nu verborgen bij start) -->
+    <section id="Welkomst" class="module" style="display: none;">
+        <div class="welkomst-container">
+            <img src="https://placehold.co/600x300/1e88e5/ffffff?text=Oost-Algarve+Landschap" alt="Landschap Oost-Algarve" class="welkomst-foto">
+            
+            <h1>Welkom bij het Oost-Algarve Verhuurders Netwerk</h1>
+            <p>Jouw platform voor efficiënte communicatie en samenwerking tussen verhuurders in de prachtige Oost-Algarve.</p>
+            
+            <h2>Wat bieden we?</h2>
+            <ul>
+                <li><strong>Huurdersverwijzingen:</strong> Help elkaar bij overboeking.</li>
+                <li><strong>Verhuurders Netwerk:</strong> Vind en verbind met collega's.</li>
+                <li><strong>Kennisbank:</strong> Deel belangrijke documenten en tips.</li>
+                <li><strong>Directe Berichten:</strong> Communiceer snel en veilig.</li>
+            </ul>
+            
+            <button class="knop-primair" onclick="startApp()">Start de App</button>
+        </div>
+    </section>
+
+    <!-- 3. HOOFD-APP CONTAINER (Verborgen totdat gebruiker inlogt) -->
+    <main id="app-container" style="display: none;">
+        
+        <!-- VERWIJZINGEN MODULE -->
+        <section id="Verwijzingen" class="module" style="display: block;"> 
+            <header>
+                <h1>🏘️ Verwijzingen Prikbord</h1>
+                <button class="knop-primair w-auto" onclick="toonFormulier()">+ Aanbieden</button>
+            </header>
+            <div id="verwijzingen-lijst">
+                <!-- Data placeholders -->
+            </div>
+            
+            <div id="verwijzing-formulier" style="display: none;">
+                <!-- Verwijzing formulier placeholder -->
+            </div>
+        </section>
+
+        <!-- NETWERK MODULE -->
+        <section id="Netwerk" class="module" style="display: none;">
+            <header>
+                 <h1>👥 Verhuurders Netwerk</h1>
+            </header>
+            <div id="netwerk-lijst">
+                <!-- Data placeholders -->
+            </div>
+        </section>
+
+        <!-- KENNISBANK MODULE -->
+        <section id="Kennisbank" class="module" style="display: none;">
+            <header>
+                <h1>📚 Kennisbank</h1>
+            </header>
+            <div id="kennisbank-lijst">
+                <!-- Data placeholders -->
+            </div>
+        </section>
+
+        <!-- BERICHTEN MODULE -->
+        <section id="Berichten" class="module" style="display: none;">
+            <header>
+                 <h1>✉️ Berichten Inbox</h1>
+            </header>
+             <p class="text-gray-500">Dit is een toekomstige functie voor directe communicatie.</p>
+        </section>
+        
+        <!-- PROFIEL MODULE -->
+        <section id="Profiel" class="module" style="display: none;">
+            <header>
+                 <h1>👤 Mijn Profiel & Instellingen</h1>
+            </header>
+            <div id="profiel-melding" class="hidden p-3 mb-4 bg-green-100 text-green-800 rounded-lg"></div>
+            <div id="profiel-details">
+                <!-- Profiel weergave en bewerkingsformulier worden hier dynamisch geladen -->
+                <p class="text-gray-500">Laadt profielgegevens...</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 4. NAVIGATIE BALK (Verborgen totdat gebruiker inlogt) -->
+    <nav id="nav-bar" style="display: none;">
+        <button onclick="wisselModule('Verwijzingen')">Verwijzingen</button>
+        <button onclick="wisselModule('Netwerk')">Netwerk</button>
+        <button onclick="wisselModule('Kennisbank')">Kennisbank</button>
+        <button onclick="wisselModule('Berichten')">Berichten</button>
+        <button onclick="wisselModule('Profiel')">Profiel</button>
+    </nav>
+    
+    <!-- 5. JAVASCRIPT LOGICA -->
+    <script>
     // ========= 1. FIREBASE CONFIGURATIE EN INITIALISATIE =========
     const firebaseConfig = {
       // LET OP: Gebruik hier jouw ECHTE Firebase configuratie!
@@ -302,4 +586,117 @@
                 if (doc.exists) {
                     profielData = doc.data();
                     // Update de globale gebruikersnaam hier
-                    currentUserNaam = profiel
+                    currentUserNaam = profielData.Naam || 'Onbekende Verhuurder'; 
+                    renderProfielWeergave(detailsDiv, profielData);
+                } else {
+                    detailsDiv.innerHTML = '<p class="text-red-500 p-4">Fout: Profiel niet gevonden.</p>';
+                }
+            }, error => {
+                console.error("Fout bij het laden van profiel:", error);
+                detailsDiv.innerHTML = '<p class="text-red-500 p-4">Fout bij het laden van profiel.</p>';
+            });
+        }
+    }
+
+    function renderProfielWeergave(container, data) {
+        container.innerHTML = `
+            <div id="profiel-weergave" class="p-4 bg-white rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-3">Mijn Gegevens</h2>
+                <p class="mb-2"><strong>Status:</strong> <span class="font-semibold ${data.Status_Verificatie === 'Geverifieerd' ? 'text-green-600' : 'text-red-500'}">${data.Status_Verificatie}</span></p>
+                <hr class="my-3 border-gray-200">
+                <p class="mb-2"><strong>Naam/Bedrijf:</strong> ${data.Naam || 'N.v.t.'}</p>
+                <p class="mb-2"><strong>E-mail:</strong> ${data.Email || 'N.v.t.'}</p>
+                <p class="mb-2"><strong>Locatie Focus:</strong> ${data.Locatie_Focus || 'Nog In Te Vullen'}</p>
+                <p class="mb-2"><strong>Bio:</strong> ${data.Bio || 'Nog In Te Vullen'}</p>
+                <p class="mb-2"><strong>Telefoon Publiek:</strong> ${data.Telefoon_Publiek ? 'Ja' : 'Nee'}</p>
+                
+                <button class="knop-primair mt-4" onclick="toonProfielBewerken()">Profiel Bewerken</button>
+                <button class="knop-primair mt-2 bg-red-500 hover:bg-red-700" onclick="logUit()">Uitloggen</button>
+            </div>
+            <div id="profiel-bewerken" class="hidden"></div>
+        `;
+    }
+
+    function toonProfielBewerken() {
+        const container = document.getElementById('profiel-details');
+        
+        container.innerHTML = `
+            <div id="profiel-bewerken" class="p-4 bg-white rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4">Profiel Bewerken</h2>
+                <form onsubmit="opslaanProfiel(event)">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Naam / Bedrijfsnaam</label>
+                    <input type="text" id="edit-naam" value="${profielData.Naam || ''}" required>
+                    
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Locatie Focus (bijv. Tavira, Olhão)</label>
+                    <input type="text" id="edit-locatie" value="${profielData.Locatie_Focus || ''}">
+
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Korte Bio (Max 200 tekens)</label>
+                    <textarea id="edit-bio" rows="4" maxlength="200" placeholder="Beschrijf je verhuuractiviteiten, specialiteiten, etc.">${profielData.Bio || ''}</textarea>
+
+                    <div class="flex items-center mt-3 mb-4">
+                        <input type="checkbox" id="edit-telefoon-publiek" class="h-4 w-4 text-blue-600 border-gray-300 rounded" ${profielData.Telefoon_Publiek ? 'checked' : ''}>
+                        <label for="edit-telefoon-publiek" class="ml-2 block text-sm text-gray-900">Mijn contactgegevens openbaar tonen in het Netwerk.</label>
+                    </div>
+
+                    <button type="submit" class="knop-primair">Opslaan</button>
+                    <button type="button" class="knop-primair mt-2 bg-gray-500 hover:bg-gray-700" onclick="profielLaden()">Annuleren</button>
+                </form>
+            </div>
+        `;
+    }
+
+    function opslaanProfiel(event) {
+        event.preventDefault();
+        
+        const nieuweNaam = document.getElementById('edit-naam').value;
+        const nieuweLocatie = document.getElementById('edit-locatie').value;
+        const nieuweBio = document.getElementById('edit-bio').value;
+        const telefoonPubliek = document.getElementById('edit-telefoon-publiek').checked;
+        
+        const updates = {
+            Naam: nieuweNaam,
+            Locatie_Focus: nieuweLocatie,
+            Bio: nieuweBio,
+            Telefoon_Publiek: telefoonPubliek,
+            Laatste_Update: firebase.firestore.FieldValue.serverTimestamp() 
+        };
+
+        db.collection("gebruikers").doc(currentUserId).update(updates)
+            .then(() => {
+                toonMelding('Profiel', "Profiel succesvol bijgewerkt!", 'green');
+                profielLaden(); // Ga terug naar de weergave modus en laad de nieuwe data
+            })
+            .catch(error => {
+                console.error("Fout bij het opslaan van profiel:", error);
+                toonMelding('Profiel', "Fout bij het opslaan: " + error.message, 'red');
+            });
+    }
+
+
+    // === 7. STARTUP LOGIC (Controleert inlogstatus) ===
+    auth.onAuthStateChanged(function(user) {
+        verbergAlles();
+
+        if (user) {
+            // GEVAL 1: Gebruiker is ingelogd
+            // Haal de naam op voordat de app start
+            db.collection("gebruikers").doc(user.uid).get()
+                .then(doc => {
+                    const naam = doc.exists ? (doc.data().Naam || 'Onbekende Verhuurder') : 'Onbekende Verhuurder';
+                    startApp(user.uid, naam);
+                })
+                .catch(error => {
+                    console.error("Fout bij ophalen gebruikersnaam:", error);
+                    startApp(user.uid, 'Onbekende Verhuurder'); // Start de app zelfs als het profiel laden mislukt
+                });
+            
+        } else {
+            // GEVAL 2: Gebruiker is NIET ingelogd
+            document.getElementById('Auth').style.display = 'block'; 
+            toonRegistratie(); 
+        }
+    });
+
+</script>
+</body>
+</html>
