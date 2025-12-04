@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     
     <!-- Tailwind CSS voor snelle styling en responsiviteit -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -240,15 +241,18 @@
             </div>
         </section>
 
-        <!-- KENNISBANK MODULE -->
-        <section id="Kennisbank" class="module" style="display: none;">
-            <header>
-                <h1>📚 Kennisbank</h1>
-            </header>
-            <div id="kennisbank-lijst">
-                <!-- Data placeholders -->
-            </div>
-        </section>
+       <section id="Kennisbank" class="module" style="display: none;">
+    <header>
+        <h1>📚 Kennisbank</h1>
+        <button class="knop-primair w-auto" onclick="toonUploadFormulier()">+ Document Uploaden</button>
+    </header>
+    
+    <div id="kennisbank-formulier" style="display: none;"></div> 
+
+    <div id="kennisbank-lijst">
+        <p class="text-gray-500">Documenten laden...</p>
+    </div>
+</section>
 
         <!-- BERICHTEN MODULE -->
         <section id="Berichten" class="module" style="display: none;">
@@ -294,9 +298,11 @@
       appId: "1:905979737722:web:a7df5a062f7f058c3b2dc3"
     };
 
+        
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();     
     const db = firebase.firestore(); 
+    const storage = firebase.storage();
     let currentUserId = null; // Opslag voor de unieke ID van de ingelogde gebruiker
     let currentUserNaam = "Onbekende Verhuurder"; // Nieuwe variabele om de naam op te slaan
 
@@ -479,6 +485,183 @@ function startHoofdApp() {
                 lijst.innerHTML = '<p class="text-red-500 p-4">Fout bij het laden van het prikbord.</p>';
             });
     }
+
+// Functie om het uploadformulier weer te geven/verbergen
+function toonUploadFormulier() {
+    const lijstDiv = document.getElementById('kennisbank-lijst');
+    const formulierDiv = document.getElementById('kennisbank-formulier');
+
+    // Als het formulier nog niet bestaat, maken we het aan
+    if (!formulierDiv) {
+        // We moeten een placeholder-div toevoegen in de Kennisbank sectie in de HTML:
+        // Zoek: <div id="kennisbank-lijst">...</div>
+        // Voeg toe na de header: <div id="kennisbank-formulier" style="display: none;"></div>
+        alert("Fout: HTML-placeholder #kennisbank-formulier mist.");
+        return;
+    }
+
+    if (formulierDiv.style.display === 'none' || formulierDiv.style.display === '') {
+        formulierDiv.innerHTML = `
+            <div class="p-4 border border-gray-300 rounded-lg mt-4 bg-blue-50">
+                <h3 class="font-bold mb-3">Nieuw Document Uploaden</h3>
+                <form id="upload-form" onsubmit="uploadKennisbankItem(event)">
+                    <input type="text" id="doc-titel" placeholder="Titel van het document (bijv. AL Regels 2025)" class="w-full p-2 border rounded mb-2" required>
+                    <textarea id="doc-beschrijving" rows="2" placeholder="Korte beschrijving" class="w-full p-2 border rounded mb-2"></textarea>
+                    
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kies Document (PDF, DOC, etc.)</label>
+                    <input type="file" id="doc-bestand" class="w-full p-2 border rounded mb-2" required>
+
+                    <button type="submit" class="knop-primair">Document Uploaden</button>
+                    <button type="button" class="knop-primair mt-2 bg-gray-500 hover:bg-gray-700" onclick="document.getElementById('kennisbank-formulier').style.display='none'">Annuleren</button>
+                    <p id="upload-status" class="mt-3 text-sm text-blue-600"></p>
+                </form>
+            </div>
+        `;
+        lijstDiv.style.display = 'none'; // Verberg de lijst tijdens het uploaden
+        formulierDiv.style.display = 'block';
+    } else {
+        lijstDiv.style.display = 'block'; // Toon de lijst weer
+        formulierDiv.style.display = 'none';
+    }
+}
+
+// Upload logica
+function uploadKennisbankItem(event) {
+    event.preventDefault();
+
+    const titel = document.getElementById('doc-titel').value.trim();
+    const beschrijving = document.getElementById('doc-beschrijving').value.trim();
+    const bestand = document.getElementById('doc-bestand').files[0];
+    const statusText = document.getElementById('upload-status');
+
+    if (!bestand) {
+        toonMelding('Kennisbank', 'Selecteer een bestand om te uploaden.', 'red');
+        return;
+    }
+
+    statusText.innerText = 'Uploaden gestart... Even geduld a.u.b.';
+
+    const opslagRef = storage.ref();
+    const bestandsRef = opslagRef.child(`kennisbank/${Date.now()}_${bestand.name}`);
+
+    const uploadTaak = bestandsRef.put(bestand);
+
+    uploadTaak.on('state_changed', 
+        (snapshot) => {
+            // Voortgang
+            const voortgang = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            statusText.innerText = `Upload voortgang: ${Math.round(voortgang)}%`;
+        }, 
+        (error) => {
+            // Fout
+            console.error("Uploadfout:", error);
+            toonMelding('Kennisbank', 'Fout bij het uploaden van het bestand: ' + error.message, 'red');
+            statusText.innerText = 'Upload mislukt.';
+        }, 
+        () => {
+            // Voltooid
+            bestandsRef.getDownloadURL().then((url) => {
+                // Sla metadata op in Firestore
+                db.collection("kennisbank").add({
+                    Titel: titel,
+                    Beschrijving: beschrijving,
+                    DownloadURL: url,
+                    Bestandsnaam: bestand.name,
+                    Type: bestand.type,
+                    UploaderId: currentUserId,
+                    UploaderNaam: currentUserNaam,
+                    Timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                })
+                .then(() => {
+                    toonMelding('Kennisbank', 'Document succesvol gedeeld!', 'green');
+                    document.getElementById('kennisbank-formulier').style.display = 'none';
+                    document.getElementById('kennisbank-lijst').style.display = 'block';
+                    // de lijst laadt automatisch bij dankzij onSnapshot (zie onder)
+                })
+                .catch(error => {
+                    console.error("Firestore opslagfout:", error);
+                    toonMelding('Kennisbank', 'Fout bij het opslaan van de metadata: ' + error.message, 'red');
+                });
+            });
+        }
+    );
+}
+
+// Laadt documenten en toont ze (Vervangt de oude placeholder)
+function kennisbankLaden() {
+    const lijst = document.getElementById('kennisbank-lijst');
+    lijst.innerHTML = '<p class="text-gray-500 p-4">Laden documenten...</p>';
+    
+    // Zorg ervoor dat het formulier verborgen is
+    const formulierDiv = document.getElementById('kennisbank-formulier');
+    if (formulierDiv) formulierDiv.style.display = 'none';
+
+    // Real-time listener op de 'kennisbank' collectie
+    db.collection("kennisbank")
+        .orderBy("Timestamp", "desc") 
+        .onSnapshot(snapshot => {
+            lijst.innerHTML = '';
+            if (snapshot.empty) {
+                lijst.innerHTML = '<p class="text-gray-500 p-4">Er zijn momenteel nog geen documenten gedeeld.</p>';
+                return;
+            }
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const datum = data.Timestamp ? data.Timestamp.toDate().toLocaleDateString('nl-NL') : 'Onbekend';
+                const isUploader = data.UploaderId === currentUserId;
+                const isPdf = data.Type && data.Type.includes('pdf');
+                
+                lijst.innerHTML += `
+                    <div class="kennisbank-item border-l-4 ${isPdf ? 'border-red-500' : 'border-yellow-500'}">
+                        <h3 class="font-bold text-lg">${data.Titel}</h3>
+                        <p class="text-sm text-gray-600">Bestand: ${data.Bestandsnaam} | Datum: ${datum} | Uploader: ${data.UploaderNaam}</p>
+                        <p class="text-gray-700 mt-1">${data.Beschrijving || 'Geen beschrijving'}</p>
+                        
+                        <div class="mt-2 flex gap-2 items-center">
+                            <a href="${data.DownloadURL}" target="_blank" class="bg-blue-600 text-white p-2 rounded-lg text-sm hover:bg-blue-700 inline-block">
+                                Downloaden
+                            </a>
+                            ${isUploader ? `
+                                <button class="bg-red-500 text-white p-2 rounded-lg text-sm hover:bg-red-600" onclick="verwijderKennisbankItem('${doc.id}', '${data.Bestandsnaam}')">
+                                    Verwijder
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        }, error => {
+            console.error("Fout bij laden kennisbank:", error);
+            lijst.innerHTML = '<p class="text-red-500 p-4">Fout bij het laden van de kennisbank.</p>';
+        });
+}
+
+// Functie voor verwijderen uit Firestore en Storage
+function verwijderKennisbankItem(docId, bestandsnaam) {
+    if (confirm("Weet u zeker dat u dit document wilt verwijderen? Dit verwijdert het document voor iedereen!")) {
+        // 1. Verwijder uit Firebase Storage
+        const opslagRef = storage.ref();
+        opslagRef.child(`kennisbank/${bestandsnaam}`).delete().then(() => {
+            // 2. Verwijder metadata uit Firestore
+            db.collection("kennisbank").doc(docId).delete()
+                .then(() => {
+                    toonMelding('Kennisbank', 'Document succesvol verwijderd.', 'green');
+                })
+                .catch(error => {
+                    console.error("Fout bij verwijderen metadata:", error);
+                    toonMelding('Kennisbank', 'Fout bij verwijderen metadata.', 'red');
+                });
+        }).catch((error) => {
+            // Kan zijn dat het bestand niet bestaat in storage, maar we verwijderen de metadata toch.
+            console.warn("Fout bij verwijderen uit Storage (gaat verder):", error);
+             db.collection("kennisbank").doc(docId).delete()
+                .then(() => {
+                    toonMelding('Kennisbank', 'Document succesvol verwijderd, ondanks Storage fout.', 'green');
+                });
+        });
+    }
+}
 
     // Toon/verberg het formulier en zorg dat het de 'verstuur' logica bevat
     function toonFormulier() {
